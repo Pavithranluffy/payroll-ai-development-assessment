@@ -1,0 +1,89 @@
+spring:
+  application:
+    name: payroll-sync-service
+  datasource:
+    url: jdbc:h2:mem:payroll;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+  h2:
+    console:
+      enabled: false
+
+server:
+  port: 8080
+
+payroll:
+  api:
+    base-url: ${PAYROLL_API_BASE_URL:http://localhost:8080/mock-external}
+    records-path: /api/v1/payroll-records
+    connect-timeout-ms: 2000
+    read-timeout-ms: ${PAYROLL_API_READ_TIMEOUT_MS:8000}
+    api-key: ${PAYROLL_API_KEY:}
+  sync:
+    skip-invalid-records: true
+  security:
+    username: ${PAYROLL_ADMIN_USERNAME}
+    password: ${PAYROLL_ADMIN_PASSWORD}
+    role: SYNC_ADMIN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    com.papaya.assessment.payroll: INFO
+    io.github.resilience4j: INFO
+
+resilience4j:
+  retry:
+    instances:
+      externalPayroll:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - com.papaya.assessment.payroll.exception.ExternalApiTransientException
+        ignoreExceptions:
+          - com.papaya.assessment.payroll.exception.ExternalApiClientException
+          - com.papaya.assessment.payroll.exception.PayrollValidationException
+  circuitbreaker:
+    instances:
+      externalPayroll:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        recordExceptions:
+          - com.papaya.assessment.payroll.exception.ExternalApiTransientException
+          - com.papaya.assessment.payroll.exception.ExternalApiException
+
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate

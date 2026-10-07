@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:payroll_test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+payroll:
+  api:
+    base-url: http://localhost:9999
+    connect-timeout-ms: 1000
+    read-timeout-ms: 3000
+  security:
+    username: payroll-sync
+    password: payroll-sync-test
+    role: SYNC_ADMIN
+
+resilience4j:
+  retry:
+    instances:
+      externalPayroll:
+        maxAttempts: 3
+        waitDuration: 50ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+  circuitbreaker:
+    instances:
+      externalPayroll:
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 3
+        waitDurationInOpenState: 1s
+
+logging:
+  level:
+    com.papaya.assessment.payroll: DEBUG
