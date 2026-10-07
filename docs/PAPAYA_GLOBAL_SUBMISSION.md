@@ -364,7 +364,7 @@ This project demonstrates how I use AI as an **accelerator** while applying seni
 | Security role enforcement | Sync endpoint requires the configured `SYNC_ADMIN` role |
 | Runtime resilience proof | Added retry, non-retry, and circuit-breaker tests |
 
-**Verified:** `mvn clean test` passes 35 tests with 0 failures and 0 errors.
+**Verified:** `mvn clean test` passes 36 tests with 0 failures and 0 errors.
 
 ---
 
