@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - payroll_pg_data:/var/lib/postgresql/data
+
+  payroll-sync:
+    build: .
+    depends_on:
+      - postgres
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      PAYROLL_API_BASE_URL: ${PAYROLL_API_BASE_URL:-http://host.docker.internal:8080/mock-external}
+      PAYROLL_API_KEY: ${PAYROLL_API_KEY:-}
+    ports:
+      - "8080:8080"
+
+volumes:
+  payroll_pg_data:
